@@ -11,7 +11,7 @@
             integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
             crossorigin="anonymous"
         />
-        <script rel= "stylesheet" src="./assets/css/style.css"></script>
+        <style rel= "stylesheet" src="./assets/css/style.css"></style>
         <title>5 Day Weather Dashboard</title>
     </head>
     
@@ -21,9 +21,10 @@
         
         <div class="row align-items-start">
             <div class="col-2 m-1 ">
-                <div class="input-group ">
-                    <span class="input-group-text" id="inputGroup-sizing-default">Search</span>
-                    <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                <div class="input-group">
+                    <form id="form">
+                        <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default" id="go">
+                    </form>
                 </div>
             </div>
             <div class="col-9 offset-md-3 border border-danger p-3 row align-items-start" id="today">
@@ -43,11 +44,10 @@
                 <div  class="border border-primary col-2 card mx-3" style="height: 40rem;"id ="day-4">
 
                 </div>
-                <div  class="border border-primary col-2 card mx-3" style="height: 40rem;"id ="day-5">
-
-                </div>
+               
             </div>
     </div>
+    
     <script
     src="https://code.jquery.com/jquery-3.7.1.min.js"
     integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
@@ -55,4 +55,5 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>
     <script>dayjs.locale('zh-cn')</script>
+    <script src="./assets/js/script.js"></script>
 </html>
