@@ -6,26 +6,27 @@ $('#day-2'),
 $('#day-3'),
 $('#day-4'),
 $('#day-5')];
+const previousSearchEl = $('#prevSearch');
 
-function fetchWeatherForecast( city) {
-   console.log(city);
+function fetchWeatherForecast(city) {
+    console.log(city);
     let forecast;
-    return fetch(`http://api.openweathermap.org/data/2.5/forecast?lat=${city.lat}&lon=${city.lon}&cnt=${40}&units=imperial&appid=${APIKey}`).then(response =>{
+    return fetch(`http://api.openweathermap.org/data/2.5/forecast?lat=${city.lat}&lon=${city.lon}&units=imperial&appid=${APIKey}`).then(response => {
         return response.json()
-        
-    }).then(response =>{
+
+    }).then(response => {
         console.log(response);
 
         forecast = response.list;
         console.log(forecast);
-     return forecast;
+        return forecast;
     });
-    
+
 }
 
 function createForecast(forecast) {
-    
-    for(day of dayElArr){
+
+    for (day of dayElArr) {
         day.empty();
     }
     // let i = 0;
@@ -35,7 +36,7 @@ function createForecast(forecast) {
     // }
 
     let index = 0;
-    for(let i = 0; i<forecast.length; i= i+8){
+    for (let i = 0; i < forecast.length; i = i + 8) {
         dayElArr[index].append(createdayCard(forecast[i]));
         index++;
     }
@@ -46,9 +47,9 @@ function createdayCard(day) {
 
     const date = day.dt_txt;
 
-    const temp = day.main.temp.day;
+    const temp = day.main.temp;
 
-    const wind = day.main.speed;
+    const wind = day.wind.speed;
     const humidity = day.main.humidity;
     const dayEl = $('<div>');
     dayEl.append($('<h3>')
@@ -70,7 +71,7 @@ function createdayCard(day) {
     return dayEl;
 }
 
-function createHeroForecast(day, city){
+function createHeroForecast(day, city) {
     todayEl.empty();
     console.log(day);
     const date = day.dt_txt;
@@ -79,7 +80,7 @@ function createHeroForecast(day, city){
 
     const wind = day.wind.speed;
     const humidity = day.main.humidity;
-    
+
     todayEl.append($('<h2>')
         .addClass('')
         .text(`${city} - ${date}`));
@@ -99,55 +100,110 @@ function createHeroForecast(day, city){
 }
 
 function fetchCityCoords(city) {
-    
+
 
     fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${APIKey}`)
-    .then(response =>{
-        return response.json()})
-    .then(response =>{
-        console.log(response);
-        const cityOb = {
-            lat: response[0].lat,
-            lon: response[0].lon
-        };
-        console.log(cityOb);
-        
-        return cityOb;
-    })
-    .then(cityOb => {
-        
-        console.log(cityOb);
-        fetchWeatherForecast(cityOb).then(forecast =>{
+        .then(response => {
+            return response.json()
+        })
+        .then(response => {
+            console.log(response);
+            const cityOb = {
+                name: city,
+                lat: response[0].lat,
+                lon: response[0].lon
+            };
+            console.log(cityOb);
 
-       
-        console.log(forecast);
-
-            const today = forecast.shift();
-            console.log(today);
-        
-            createHeroForecast(today, city);
-            createForecast(forecast);
             return cityOb;
-        })});
+        })
+        .then(cityOb => {
+
+            console.log(cityOb);
+            let cities = readCitiesFromStorage();
+
+            if(cities.length<=6){
+              cities.push(cityOb);
+              saveCitiesToStorage(cities);
+            }
+            else{
+                cities.shift();
+                cities.unshift(cityOb);
+                saveCitiesToStorage(cities);
+            }
+            createPrevSearchButtons();
+
+            fetchWeatherForecast(cityOb).then(forecast => {
+
+
+                console.log(forecast);
+
+                const today = forecast.shift();
+                console.log(today);
+
+                createHeroForecast(today, city);
+                createForecast(forecast);
+                return cityOb;
+            })
+        });
 }
 
-    
-    
+function readCitiesFromStorage() {
 
 
-function handleSearch(input){
-  
-    
-    
+    let projects = JSON.parse(localStorage.getItem('cities'));
+    if (!projects) {
+        projects = [];
+    }
+    return projects;
+}
+
+function saveCitiesToStorage(cities) {
+    localStorage.setItem('cities', JSON.stringify(cities));
+}
+
+function createPrevSearchButtons(){
+    previousSearchEl.empty();
+    let cities = readCitiesFromStorage();
+
+
+    let citiesEl = $('<ul>');
+    for (city of cities) {
+        let cityButton = $('<button>')
+            .text(city.name)
+            .addClass('button')
+            .attr('data-name', city.name);
+        previousSearchEl.append(cityButton);
+    }
+
+   previousSearchEl.append(citiesEl);
+   
+
+
+}
+
+function handlePrevSearch(event) {
+    event.preventDefault();
+
+    const city = $(this).attr('data-name');
+
+
+    fetchCityCoords(city);
+    createPrevSearchButtons();
+    searchInputEl.val('');
+
+}
+
+
+function handleSearch(input) {
     console.log(input);
     fetchCityCoords(input);
-
-
+    
 }
 
-$(document).ready(function(){
+$(document).ready(function () {
 
-    $('#form').submit(event =>{
+    $('#form').submit(event => {
         event.preventDefault();
         const input = searchInputEl.val();
         searchInputEl.val('');
@@ -155,5 +211,6 @@ $(document).ready(function(){
         handleSearch(input);
 
     });
+    previousSearchEl.on('click', '.button', handlePrevSearch);
 
 });
