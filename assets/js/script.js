@@ -1,216 +1,180 @@
-const APIKey = '83c450acdd6a763235afe012c38bb5d5';
-const searchInputEl = $('#go');
-const todayEl = $('#today');
-const dayElArr = [$('#day-1'),
-$('#day-2'),
-$('#day-3'),
-$('#day-4'),
-$('#day-5')];
-const previousSearchEl = $('#prevSearch');
-
-function fetchWeatherForecast(city) {
-    console.log(city);
-    let forecast;
-    return fetch(`http://api.openweathermap.org/data/2.5/forecast?lat=${city.lat}&lon=${city.lon}&units=imperial&appid=${APIKey}`).then(response => {
-        return response.json()
-
-    }).then(response => {
-        console.log(response);
-
-        forecast = response.list;
-        console.log(forecast);
-        return forecast;
-    });
-
-}
-
-function createForecast(forecast) {
-
-    for (day of dayElArr) {
-        day.empty();
-    }
-    // let i = 0;
-    // for(day of forecast){
-    //     dayElArr[i].append(createdayCard(day));
-    //     i++;
-    // }
-
-    let index = 0;
-    for (let i = 0; i < forecast.length; i = i + 8) {
-        dayElArr[index].append(createdayCard(forecast[i]));
-        index++;
-    }
-}
-
-function createdayCard(day) {
 
 
-    const date = day.dt_txt;
-
-    const temp = day.main.temp;
-
-    const wind = day.wind.speed;
-    const humidity = day.main.humidity;
-    const dayEl = $('<div>');
-    dayEl.append($('<h3>')
-        .addClass('')
-        .text(date));
-    dayEl.append($('<img>')
-        .attr('src', ` https://openweathermap.org/img/wn/${day.weather[0].icon}.png`)
-        .addClass(''));
-    dayEl.append($('<p>')
-        .addClass('')
-        .text(`Temp: ${temp}`));
-    dayEl.append($('<p>')
-        .addClass('')
-        .text(`Wind: ${wind} MPH`));
-    dayEl.append($('<p>')
-        .addClass('')
-        .text(`Humidity: ${humidity} %`));
-
-    return dayEl;
-}
-
-function createHeroForecast(day, city) {
-    todayEl.empty();
-    console.log(day);
-    const date = day.dt_txt;
-
-    const temp = day.main.temp;
-
-    const wind = day.wind.speed;
-    const humidity = day.main.humidity;
-
-    todayEl.append($('<h2>')
-        .addClass('')
-        .text(`${city} - ${date}`));
-    todayEl.append($('<img>')
-        .attr('src', `https://openweathermap.org/img/wn/${day.weather[0].icon}.png`)
-        .addClass('col-2'));
-    todayEl.append($('<p>')
-        .addClass('')
-        .text(`Temp: ${temp}`));
-    todayEl.append($('<p>')
-        .addClass('')
-        .text(`Wind: ${wind} MPH`));
-    todayEl.append($('<p>')
-        .addClass('')
-        .text(`Humidity: ${humidity} %`));
-
-}
-
-function fetchCityCoords(city) {
+// *****THIS WAS WORKED ON IN A GROUP IN CLASS******
 
 
-    fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=5&appid=${APIKey}`)
-        .then(response => {
-            return response.json()
+// Define the API key for OpenWeatherMap
+// Signup link: https://home.openweathermap.org/users/sign_up
+// Signin link: https://home.openweathermap.org/users/sign_in
+// TODO: Replace 'YOUR_API_KEY' with your actual API key
+const API_KEY = '83c450acdd6a763235afe012c38bb5d5'; 
+
+// Get references to necessary DOM elements (e.g., search input, buttons, weather display areas)
+// TODO: Replace the 'INSERT_ID_HERE' with the appropriate selector for the DOM elements below
+const searchBtn = document.getElementById('search-btn');
+const cityInput = document.getElementById('city-input');
+const currentWeatherDisplay = document.getElementById('current-weather');
+const forecastDisplay = document.getElementById('forecast-display');
+const searchHistory = document.getElementById('search-history');
+
+// Fetch the coordinates (latitude and longitude) of a city using the OpenWeatherMap Geocoding API
+// TODO: Complete the getCoordinates method. 
+function getCoordinates(cityName) {
+    const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`;
+    return fetch(geoUrl)
+        // TODO: Convert the API response from a raw format (such as text or blob) into a JavaScript object using the .json() method.
+        .then(response =>{
+            return response.json();
         })
-        .then(response => {
-            console.log(response);
-            const cityOb = {
-                name: city,
-                lat: response[0].lat,
-                lon: response[0].lon
+        .then(data => {
+            console.log('API Response:', data);
+            if (data.length === 0) {
+                throw new Error('City not found');
+            }
+            return {
+                // TODO: Extract the latitude and longitude from the first result in the returned data array (check console).
+                lat: data[0].lat,
+                lon: data[0].lon,
             };
-            console.log(cityOb);
-
-            return cityOb;
         })
-        .then(cityOb => {
-
-            console.log(cityOb);
-            let cities = readCitiesFromStorage();
-
-            if(cities.length<=6){
-              cities.push(cityOb);
-              saveCitiesToStorage(cities);
-            }
-            else{
-                cities.shift();
-                cities.unshift(cityOb);
-                saveCitiesToStorage(cities);
-            }
-            createPrevSearchButtons();
-
-            fetchWeatherForecast(cityOb).then(forecast => {
-
-
-                console.log(forecast);
-
-                const today = forecast.shift();
-                console.log(today);
-
-                createHeroForecast(today, city);
-                createForecast(forecast);
-                return cityOb;
-            })
+        // TODO: Handle any errors that occur during the API request or response parsing.
+        .catch( err =>{
+            alert('Error: ' + err.message);
+            return;
         });
 }
 
-function readCitiesFromStorage() {
-
-
-    let projects = JSON.parse(localStorage.getItem('cities'));
-    if (!projects) {
-        projects = [];
-    }
-    return projects;
+// Fetch the weather data using the coordinates
+// TODO: Complete the getWeather method by filling in the .then(s)
+function getWeather(lat, lon) {
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+    return fetch(weatherUrl)
+        // TODO: Convert the API response into a JSON object using .json() to allow handling of the data in JavaScript.
+        .then(response =>{
+            return response.json();
+        })
+        // TODO: Return the parsed data in the second .then() so that it can be used in the next steps of the promise chain for further processing.
+        .then(data =>{
+            return data;
+        });
 }
 
-function saveCitiesToStorage(cities) {
-    localStorage.setItem('cities', JSON.stringify(cities));
+// Display the current weather data
+// TODO: Use the 'Current Weather Data' in the console to complete the displayCurrentWeather method
+function displayCurrentWeather(data) {
+    console.log('Current Weather Data', data);
+    const currentWeather = data.list[0];
+    const city = data.city.name;
+    const date = new Date(currentWeather.dt * 1000).toLocaleDateString();
+    const temperature = currentWeather.main.temp;
+    const humidity = currentWeather.main.humidity;
+    const windSpeed = currentWeather.wind.speed;
+    const weatherIcon = `http://openweathermap.org/img/wn/${currentWeather.weather[0].icon}@2x.png`;
+
+    currentWeatherDisplay.innerHTML = `
+        <h2>${city} (${date})</h2>
+        <img src="${weatherIcon}" alt="Weather Icon">
+        <p>Temperature: ${temperature}°C</p>
+        <p>Humidity: ${humidity}%</p>
+        <p>Wind Speed: ${windSpeed} m/s</p>
+    `;
 }
 
-function createPrevSearchButtons(){
-    previousSearchEl.empty();
-    let cities = readCitiesFromStorage();
 
 
-    let citiesEl = $('<ul>');
-    for (city of cities) {
-        let cityButton = $('<button>')
-            .text(city.name)
-            .addClass('button')
-            .attr('data-name', city.name);
-        previousSearchEl.append(cityButton);
+// Display the 5-day weather forecast
+// TODO: Use the '5-day Weather Data' in the console to complete the displayForecast method
+function displayForecast(data) {
+    console.log('5-day Weather Data', data);
+    forecastDisplay.innerHTML = '';
+    for (let i = 0; i < data.list.length; i += 8) { // The API provides data every 3 hours, so skip 8 (24-hour intervals)
+        const forecastItem = data.list[i];
+        const date = new Date(forecastItem.dt * 1000).toLocaleDateString();
+        const temperature = forecastItem.main.temp;
+        const humidity = forecastItem.main.humidity;
+        const windSpeed = forecastItem.wind.speed;
+        const weatherIcon = `http://openweathermap.org/img/wn/${forecastItem.weather[0].icon}@2x.png`;
+
+        forecastDisplay.innerHTML += `
+            <div class="forecast-item">
+                <h4>${date}</h4>
+                <img src="${weatherIcon}" alt="Weather Icon">
+                <p>Temp: ${temperature}°C</p>
+                <p>Humidity: ${humidity}%</p>
+                <p>Wind Speed: ${windSpeed} m/s</p>
+            </div>
+        `;
     }
+}
 
-   previousSearchEl.append(citiesEl);
+// Update and store search history in localStorage
+function updateSearchHistory(city) {
+    let history = JSON.parse(localStorage.getItem('history')) || [];
+    // TODO: Check if the city already exists in the search history
+    if(!history.includes(city)){
+    // If the city does not exist, add it to the history array, 
+    // then update the localStorage with the new history and re-render the search history.
+
+        history.push(city);
+        localStorage.setItem('history', JSON.stringify(history));
+        displaySearchHistory();
+    }
    
-
-
 }
 
-function handlePrevSearch(event) {
-    event.preventDefault();
-
-    const city = $(this).attr('data-name');
-
-
-    fetchCityCoords(city);
-    createPrevSearchButtons();
-    searchInputEl.val('');
-
-}
-
-
-function handleSearch(input) {
-    console.log(input);
-    fetchCityCoords(input);
-    
-}
-
-$(document).ready(function () {
-
-    $('#form').submit(event => {
-        event.preventDefault();
-        const input = searchInputEl.val();
-        searchInputEl.val('');
-        console.log(input);
-        handleSearch(input);
-
+// Display search history from localStorage on page load
+function displaySearchHistory() {
+    let history = JSON.parse(localStorage.getItem('history')) || [];
+    searchHistory.innerHTML = '';  
+    // TODO: Iterate through the search history array and create a list item (li) for each city.
+    // Set the text content of the li to the city name.
+    // Add a click event listener to each li, so when a city is clicked, the weather data for that city is fetched.
+    // The event listener fetches coordinates using getCoordinates(), then fetches the weather data with those coordinates,
+    // and finally displays the current weather and 5-day forecast using displayCurrentWeather() and displayForecast().
+    // Append each li element to the searchHistory DOM element to display the list of searched cities.
+    history.forEach(city => {
+        const li = document.createElement('li');
+        li.textContent = city;
+        li.addEventListener('click', () =>{
+            getCoordinates(city)
+            // Fetch weather data using the coordinates
+            .then(coords => getWeather(coords.lat, coords.lon))
+            .then(weatherData => {
+                // TODO: Display the current weather
+                displayCurrentWeather(weatherData)
+                // TODO: Display the 5-day forecast
+                displayForecast(weatherData)
+            })
+        })
+        searchHistory.appendChild(li);
     });
-    previousSearchEl.on('click', '.button', handlePrevSearch);
+}
 
+// Event listener for the search button to trigger the weather search and display
+// TODO: Complete the search button event listener
+searchBtn.addEventListener('click', () => {
+    // TODO: Get the city name from the input field
+    const city = cityInput.value.trim();
+    // TODO: If the input field is empty, return
+    if(city === ''){
+        return;
+    }
+    // Fetch the city coordinates and then get the weather data
+    getCoordinates(city)
+        // Fetch weather data using the coordinates
+        .then(coords => getWeather(coords.lat, coords.lon))
+        .then(weatherData => {
+            // TODO: Display the current weather
+            displayCurrentWeather(weatherData)
+            // TODO: Display the 5-day forecast
+            displayForecast(weatherData)
+            // TODO: Update the search history
+            updateSearchHistory(weatherData.city.name)
+        })
+        // TODO: Error handling  
+        .catch(err => alert(err.message))
 });
+
+// TODO: Call the displaySearchHistory function on page load to show saved search history
+displaySearchHistory();
+
